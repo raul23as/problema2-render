@@ -4,10 +4,20 @@ import os
 
 app = Flask(__name__)
 
-DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a.virginia-postgres.render.com/usuariosdb_czmv"
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Si no existe (modo local) usa tu postgres local
+if not DATABASE_URL:
+    DATABASE_URL = "postgresql://postgres:1234@localhost:5432/usuariosdb"
+
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL, sslmode='require')
+    # Si es Render usa SSL
+    if "render.com" in DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL, sslmode='require')
+    else:
+        return psycopg2.connect(DATABASE_URL)
+
 
 def init_db():
     con = get_db()
@@ -26,11 +36,12 @@ def init_db():
 
 init_db()
 
+
 @app.route("/")
 def index():
     con = get_db()
     cur = con.cursor()
-    cur.execute("SELECT * FROM usuarios")
+    cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
     users = cur.fetchall()
     con.close()
     return render_template("index.html", users=users)
@@ -47,7 +58,7 @@ def add():
     cur = con.cursor()
     cur.execute(
         "INSERT INTO usuarios (nombre,email,telefono,rol) VALUES (%s,%s,%s,%s)",
-        (nombre,email,telefono,rol)
+        (nombre, email, telefono, rol)
     )
     con.commit()
     con.close()
@@ -65,4 +76,4 @@ def delete(id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    app.run(debug=True)
