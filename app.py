@@ -2,17 +2,18 @@ import os
 import psycopg2
 from flask import Flask, render_template, request, redirect
 
-app = Flask(__name__)
+# FORZAMOS A FLASK A BUSCAR LA CARPETA CON T MAYÚSCULA
+app = Flask(__name__, template_folder='Templates')
 
 # URL Directa de tu base de datos en Render
 DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a.virginia-postgres.render.com/usuariosdb_czmv"
 
 def get_db():
-    # Usamos la URL directa y forzamos SSL para Render
+    # En Render es obligatorio sslmode='require'
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
-    """Crea la tabla al iniciar si no existe"""
+    """Crea la tabla si no existe"""
     try:
         con = get_db()
         cur = con.cursor()
@@ -32,18 +33,21 @@ def init_db():
     except Exception as e:
         print(f"Error de conexión: {e}")
 
-# Ejecutar inicialización
+# Inicializamos la DB
 init_db()
 
 @app.route("/")
 def index():
-    con = get_db()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
-    users = cur.fetchall()
-    cur.close()
-    con.close()
-    return render_template("index.html", users=users)
+    try:
+        con = get_db()
+        cur = con.cursor()
+        cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
+        users = cur.fetchall()
+        cur.close()
+        con.close()
+        return render_template("index.html", users=users)
+    except Exception as e:
+        return f"Error en el servidor: {e}", 500
 
 @app.route("/add", methods=["POST"])
 def add():
@@ -74,5 +78,5 @@ def delete(id):
     return redirect("/")
 
 if __name__ == "__main__":
-    # Render usa Gunicorn, pero esto sirve para pruebas
+    # Comando para correr local si lo necesitaras, pero Render usa Gunicorn
     app.run(host="0.0.0.0", port=10000)
