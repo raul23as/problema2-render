@@ -1,17 +1,17 @@
+import os
 import psycopg2
 from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-# URL que me pasaste (Ya configurada para Render)
-DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a/usuariosdb_czmv"
+# USA ESTA URL DIRECTA (Sin el os.environ para que no se borre)
+DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a.virginia-postgres.render.com/usuariosdb_czmv"
 
 def get_db():
-    # En Render es obligatorio usar sslmode='require'
+    # En Render SIEMPRE usa sslmode='require'
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
-    """Crea la tabla si no existe al iniciar"""
     try:
         con = get_db()
         cur = con.cursor()
@@ -27,9 +27,12 @@ def init_db():
         con.commit()
         cur.close()
         con.close()
-        print("Conexión exitosa y tabla lista.")
     except Exception as e:
-        print(f"Error conectando a la DB: {e}")
+        print(f"Error: {e}")
+
+init_db()
+
+# ... (el resto de tus rutas @app.route están bien)
 
 # Inicializamos la base de datos al arrancar la app
 init_db()
