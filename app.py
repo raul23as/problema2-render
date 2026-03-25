@@ -2,23 +2,17 @@ import os
 import psycopg2
 from flask import Flask, render_template, request, redirect
 
-# Configuramos Flask para que busque en 'templates' (minúsculas) o 'Templates' (mayúsculas)
-# Para asegurar éxito en el laboratorio, intentamos registrar la ruta absoluta
-template_dir = os.path.abspath('Templates')
-if not os.path.exists(template_dir):
-    template_dir = os.path.abspath('templates')
-
-app = Flask(__name__, template_folder=template_dir)
+# Flask busca la carpeta 'templates' por defecto
+app = Flask(__name__)
 
 # URL Directa de tu base de datos de Render
 DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a.virginia-postgres.render.com/usuariosdb_czmv"
 
 def get_db():
-    # Render requiere SSL activo
+    # Render requiere SSL
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
-    """Crea la tabla si no existe al arrancar"""
     try:
         con = get_db()
         cur = con.cursor()
@@ -34,11 +28,10 @@ def init_db():
         con.commit()
         cur.close()
         con.close()
-        print("--- Conexión a Base de Datos: EXITOSA ---")
     except Exception as e:
-        print(f"--- ERROR DE CONEXIÓN: {e} ---")
+        print(f"Error inicializando DB: {e}")
 
-# Inicializar tabla
+# Crear tabla al inicio
 init_db()
 
 @app.route("/")
@@ -52,8 +45,7 @@ def index():
         con.close()
         return render_template("index.html", users=users)
     except Exception as e:
-        # Si falla el HTML, esto nos dirá qué carpeta está buscando Flask
-        return f"Error: {e}. Flask buscando en: {app.template_folder}", 500
+        return f"Error en la base de datos o plantilla: {e}", 500
 
 @app.route("/add", methods=["POST"])
 def add():
@@ -84,6 +76,4 @@ def delete(id):
     return redirect("/")
 
 if __name__ == "__main__":
-    # Render usa Gunicorn, pero esto sirve para local
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run()
