@@ -4,14 +4,15 @@ from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-# USA ESTA URL DIRECTA (Sin el os.environ para que no se borre)
+# URL Directa de tu base de datos en Render
 DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a.virginia-postgres.render.com/usuariosdb_czmv"
 
 def get_db():
-    # En Render SIEMPRE usa sslmode='require'
+    # Usamos la URL directa y forzamos SSL para Render
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
+    """Crea la tabla al iniciar si no existe"""
     try:
         con = get_db()
         cur = con.cursor()
@@ -27,28 +28,22 @@ def init_db():
         con.commit()
         cur.close()
         con.close()
+        print("Base de datos conectada con éxito")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error de conexión: {e}")
 
-init_db()
-
-# ... (el resto de tus rutas @app.route están bien)
-
-# Inicializamos la base de datos al arrancar la app
+# Ejecutar inicialización
 init_db()
 
 @app.route("/")
 def index():
-    try:
-        con = get_db()
-        cur = con.cursor()
-        cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
-        users = cur.fetchall()
-        cur.close()
-        con.close()
-        return render_template("index.html", users=users)
-    except Exception as e:
-        return f"Error al obtener usuarios: {e}", 500
+    con = get_db()
+    cur = con.cursor()
+    cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
+    users = cur.fetchall()
+    cur.close()
+    con.close()
+    return render_template("index.html", users=users)
 
 @app.route("/add", methods=["POST"])
 def add():
@@ -56,7 +51,7 @@ def add():
     email = request.form["email"]
     telefono = request.form["telefono"]
     rol = request.form["rol"]
-
+    
     con = get_db()
     cur = con.cursor()
     cur.execute(
@@ -79,4 +74,5 @@ def delete(id):
     return redirect("/")
 
 if __name__ == "__main__":
-    app.run()
+    # Render usa Gunicorn, pero esto sirve para pruebas
+    app.run(host="0.0.0.0", port=10000)
