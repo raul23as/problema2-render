@@ -1,51 +1,51 @@
-from flask import Flask, render_template, request, redirect
 import psycopg2
-import os
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
-# Si no existe (modo local) usa tu postgres local
-if not DATABASE_URL:
-    DATABASE_URL = "postgresql://postgres:1234@localhost:5432/usuariosdb"
-
+# URL que me pasaste (Ya configurada para Render)
+DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a/usuariosdb_czmv"
 
 def get_db():
-    # Si es Render usa SSL
-    if "render.com" in DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL, sslmode='require')
-    else:
-        return psycopg2.connect(DATABASE_URL)
-
+    # En Render es obligatorio usar sslmode='require'
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def init_db():
-    con = get_db()
-    cur = con.cursor()
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios(
-        id SERIAL PRIMARY KEY,
-        nombre VARCHAR(100),
-        email VARCHAR(100),
-        telefono VARCHAR(20),
-        rol VARCHAR(50)
-    );
-    """)
-    con.commit()
-    con.close()
+    """Crea la tabla si no existe al iniciar"""
+    try:
+        con = get_db()
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios(
+                id SERIAL PRIMARY KEY,
+                nombre VARCHAR(100),
+                email VARCHAR(100),
+                telefono VARCHAR(20),
+                rol VARCHAR(50)
+            );
+        """)
+        con.commit()
+        cur.close()
+        con.close()
+        print("Conexión exitosa y tabla lista.")
+    except Exception as e:
+        print(f"Error conectando a la DB: {e}")
 
+# Inicializamos la base de datos al arrancar la app
 init_db()
-
 
 @app.route("/")
 def index():
-    con = get_db()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
-    users = cur.fetchall()
-    con.close()
-    return render_template("index.html", users=users)
-
+    try:
+        con = get_db()
+        cur = con.cursor()
+        cur.execute("SELECT * FROM usuarios ORDER BY id DESC")
+        users = cur.fetchall()
+        cur.close()
+        con.close()
+        return render_template("index.html", users=users)
+    except Exception as e:
+        return f"Error al obtener usuarios: {e}", 500
 
 @app.route("/add", methods=["POST"])
 def add():
@@ -57,13 +57,13 @@ def add():
     con = get_db()
     cur = con.cursor()
     cur.execute(
-        "INSERT INTO usuarios (nombre,email,telefono,rol) VALUES (%s,%s,%s,%s)",
+        "INSERT INTO usuarios (nombre, email, telefono, rol) VALUES (%s, %s, %s, %s)",
         (nombre, email, telefono, rol)
     )
     con.commit()
+    cur.close()
     con.close()
     return redirect("/")
-
 
 @app.route("/delete/<int:id>")
 def delete(id):
@@ -71,9 +71,9 @@ def delete(id):
     cur = con.cursor()
     cur.execute("DELETE FROM usuarios WHERE id=%s", (id,))
     con.commit()
+    cur.close()
     con.close()
     return redirect("/")
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
