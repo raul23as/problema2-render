@@ -4,11 +4,27 @@ import os
 
 app = Flask(__name__)
 
-DATABASE_URL = "postgresql://postgres:1234@localhost:5432/usuariosdb"
+DATABASE_URL = "postgresql://usuariosdb_czmv_user:LSbluidIePcSYm2qUQlITfSNp5fWZfiV@dpg-d720l76a2pns738cora0-a.virginia-postgres.render.com/usuariosdb_czmv"
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
 
+def init_db():
+    con = get_db()
+    cur = con.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS usuarios(
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(100),
+        email VARCHAR(100),
+        telefono VARCHAR(20),
+        rol VARCHAR(50)
+    );
+    """)
+    con.commit()
+    con.close()
+
+init_db()
 
 @app.route("/")
 def index():
@@ -49,4 +65,4 @@ def delete(id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)
