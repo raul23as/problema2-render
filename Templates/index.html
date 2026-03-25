@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CRUD Usuarios</title>
+
+<style>
+body{
+font-family: Arial, Helvetica, sans-serif;
+background: #0f172a;
+color: white;
+margin:0;
+padding:40px;
+}
+
+.container{
+max-width:1000px;
+margin:auto;
+}
+
+h2{
+margin-top:30px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:10px;
+box-shadow:0 10px 25px rgba(0,0,0,0.3);
+margin-bottom:20px;
+}
+
+form{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+input{
+padding:10px;
+border-radius:6px;
+border:none;
+background:#1f2937;
+color:white;
+}
+
+input::placeholder{
+color:#9ca3af;
+}
+
+button{
+grid-column:span 2;
+padding:12px;
+background:linear-gradient(90deg,#06b6d4,#3b82f6);
+border:none;
+color:white;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+opacity:.9;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#111827;
+border-radius:10px;
+overflow:hidden;
+}
+
+th{
+background:#1f2937;
+padding:12px;
+text-align:left;
+}
+
+td{
+padding:12px;
+border-top:1px solid #1f2937;
+}
+
+tr:hover{
+background:#0b1220;
+}
+
+.delete{
+background:#ef4444;
+color:white;
+padding:6px 10px;
+border-radius:4px;
+text-decoration:none;
+font-size:12px;
+}
+
+.delete:hover{
+background:#dc2626;
+}
+
+.title{
+font-size:28px;
+margin-bottom:20px;
+font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<div class="title">CRUD Usuarios</div>
+
+<div class="card">
+<h2>Agregar Usuario</h2>
+
+<form method="POST" action="/add">
+<input name="nombre" placeholder="Nombre" required>
+<input name="email" placeholder="Email" required>
+<input name="telefono" placeholder="Telefono" required>
+<input name="rol" placeholder="Rol" required>
+<button>Guardar Usuario</button>
+</form>
+
+</div>
+
+<div class="card">
+<h2>Lista Usuarios</h2>
+
+<table>
+<tr>
+<th>ID</th>
+<th>Nombre</th>
+<th>Email</th>
+<th>Telefono</th>
+<th>Rol</th>
+<th>Accion</th>
+</tr>
+
+{% for u in users %}
+<tr>
+<td>{{u[0]}}</td>
+<td>{{u[1]}}</td>
+<td>{{u[2]}}</td>
+<td>{{u[3]}}</td>
+<td>{{u[4]}}</td>
+<td>
+<a class="delete" href="/delete/{{u[0]}}">Eliminar</a>
+</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+</div>
+
+</body>
+</html>
